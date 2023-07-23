@@ -1,11 +1,11 @@
 [
   {
     "type": "file",
-    "id": "file-block",
-    "title": "Example File Block",
+    "id": "slreqx-block",
+    "title": "Requirements Editor",
     "description": "A basic file block",
     "entry": "blocks/example-file-block/index.tsx",
-    "matches": ["*"],
+    "matches": ["*.slreqx"],
     "example_path": "https://github.com/facebook/react/blob/main/packages/react-dom/index.js"
   },
   {
