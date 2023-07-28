@@ -52,7 +52,7 @@ Receives content of a folder.
 This repo is a clone of the blocks-template. 
 
 ### Define custom block
-In blocks.config.json, 
+In blocks.config.json, change name. Now if running locally via localhost:4000, the block is visible for 
 
 
 
