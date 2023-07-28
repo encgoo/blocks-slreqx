@@ -29,6 +29,11 @@ sudo npm install -g yarn
 yarn
 yarn start
 ```
+This starts a node.js server in port 4000. Use
+```bash
+sudo lsof -i -P -n | grep LISTEN
+```
+Use a browser to open `localhost:4000` to see. Go to `blocks.githubnext.com/encgoo/blocks-slreqx` to see the effect.
 
 
 ## Developement
