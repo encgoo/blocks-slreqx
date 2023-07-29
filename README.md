@@ -52,7 +52,15 @@ Receives content of a folder.
 This repo is a clone of the blocks-template. 
 
 ### Define custom block
-In blocks.config.json, change name. Now if running locally via localhost:4000, the block is visible for 
+In blocks.config.json, change name and submit. Now if running locally via localhost:4000, the block is visible for pickup from the drop down picker directly. This is true for githubnext/blocks.
+
+Use this url to view a slreqx. No need to push the change of js code to github before seeing the modification. Need the devServer running locally (localhost:4000).
+https://blocks.githubnext.com/encgoo/blocks-slreqx/blob/main/docs/HLR.slreqx?devServer=http%3A%2F%2Flocalhost%3A4000%2F&blockKey=encgoo__blocks-slreqx__slreqx-block&fileRef=
+
+
+But if go to own repo, then the block is not shown for pickup. Try to search block by entering https://github.com/encgoo/block-slreqx. It will show up after deployed. Not sure if it shows before deployed.
+
+
 
 
 

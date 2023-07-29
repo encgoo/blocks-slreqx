@@ -24,7 +24,7 @@ export default function ExampleFileBlock(props: FileBlockProps) {
           borderBottomStyle="solid"
           borderColor="border.default"
         >
-          File: {context.path} {language}
+          File Name: {context.path} {language}
         </Box>
         <Box p={4}>
           <p>Metadata example: this button has been clicked:</p>
