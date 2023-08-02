@@ -30,22 +30,41 @@ export default function ExampleFileBlock(props: FileBlockProps) {
           <p>Metadata example: this button has been clicked:</p>
           <Button
             onClick={() =>{ 
-                const url = "http://10.0.2.15:8089/reqset/a";
-                const blob = new Blob([content], {type: "application/zip"});
+                // Use github api to retrieve content again
+                // https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
+                // Seems like blocks handle the token for us.
+                const url1 = 'https://api.github.com/repos/encgoo/blocks-slreqx/contents/' + context.path;
+                fetch(url1,{
+                  method: 'GET',
+                  headers: {
+                      'Content-Type': 'application/zip',
+                  },                 
+                }).then((response) => {
 
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', url, true);
-                xhr.send(blob);
-                //fetch(url, { 
-                //  method: 'POST', 
-                  //headers: {
-                  //  'Content-Type': 'application/zip',
-                  //},
-                //  body: blob, 
-                //  mode: 'cors'}).then((response) =>{})
-                //.then((result) => {
-                //
-                //})
+                  response.json().then( (json) => { 
+
+                  const url = "http://10.0.2.15:8089/reqset/a";
+                  
+                  // Now post to local golang server
+                  fetch(url, { 
+                    method: 'POST', 
+                      headers: {
+                        'Content-Type': 'application/zip',
+                      },
+                      body: json.content, 
+                      mode: 'cors'}).then((response) =>{})
+                    .then((result) => {
+                      // finally we can update the display
+                      var ret = response;
+
+
+                    })
+                  }
+                );
+
+                }).then((result) => {
+                  var cont = result;
+                });
                }
             }
           >
