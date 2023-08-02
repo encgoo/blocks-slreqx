@@ -1,5 +1,5 @@
 import { FileBlockProps, getLanguageFromFilename } from "@githubnext/blocks";
-import { Button, Box, Heading, DataTable } from "@primer/react";
+import { Button, Box, Heading } from "@primer/react";
 import { useState } from "react";
 import "./index.css";
 
@@ -11,6 +11,15 @@ export default function ExampleFileBlock(props: FileBlockProps) {
   // force update?
   const [seed, setSeed] = useState(0);
 
+  const tableStyle = {
+    "width": "100%", 
+    "border": "1px solid black",
+    "textAlign": "left"
+  };
+  const tdStyle = {
+    "border": "1px solid black"
+  };
+
   return (
     <Box p={4}>
       <Box
@@ -20,17 +29,7 @@ export default function ExampleFileBlock(props: FileBlockProps) {
         borderRadius={6}
         overflow="hidden"
       >
-        <Box
-          bg="canvas.subtle"
-          p={3}
-          borderBottomWidth={1}
-          borderBottomStyle="solid"
-          borderColor="border.default"
-        >
-          Reqet File Blob Name: {context.path} {language}
-        </Box>
         <Box p={4}>
-          <p>Metadata example: this button has been clicked:</p>
           <Button
             onClick={() =>{ 
                 // Use github api to retrieve content again
@@ -71,40 +70,71 @@ export default function ExampleFileBlock(props: FileBlockProps) {
                }
             }
           >
-            {metadata.number || 0} times
+            View Requirement Set
           </Button>
           <pre className="mt-3 p-3" key={seed}>
-            <Heading>Summary: </Heading> 
+
+            <Heading >Summary: </Heading> 
+            <hr/>
             {metadata.reqsetJson && 
-            <table>
+            <table style={tableStyle}>
               <tr>
-                <td>File Path</td>
-                <td>
+                <th style={tdStyle}>File Path</th>
+                <td style={tdStyle}>
                   {metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Filepath}
                 </td>
               </tr>
               <tr>
-                <td>Name</td>
-                <td>
+                <th style={tdStyle}>Name</th>
+                <td style={tdStyle}>
                   {metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Name}
                 </td>
               </tr>
               <tr>
-                <td>
+                <th style={tdStyle}>
                   Created By
-                </td>
-                <td>
+                </th>
+                <td style={tdStyle}>
                   {metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.CreatedBy}
                 </td>
               </tr>
             </table>
             }
-            {metadata.reqsetJson && 
-            <DataTable>
-              
-            </DataTable>
+            <br/>
+            <br/>
+            <Heading>Requirement Set</Heading>
+            <hr/>
+            {metadata.reqsetJson &&
+            <table style={tableStyle}>
+              <tr>
+                <th style={tdStyle}>Index</th>
+                <th style={tdStyle}>SID</th>
+                <th style={tdStyle}>Summary</th>
+                <th style={tdStyle}>Description</th>
+              </tr>
+              <tbody>
+                {metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items.map((req, i) =>{
+                  return [
+                    <tr>
+                      <td style={tdStyle}>
+                        {i}
+                      </td>    
+                      <td style={tdStyle}>
+                        {req.Sid}
+                      </td>    
+                      <td style={tdStyle}>
+                        {req.Summary}
+                      </td>    
+                      <td style={tdStyle}>
+                        {req.Description}
+                      </td>    
+                    </tr>
+                  ];
+                })}
+              </tbody>
+            </table>
             }
-          
+
           </pre>
           
 
