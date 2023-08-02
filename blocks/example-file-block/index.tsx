@@ -1,5 +1,6 @@
 import { FileBlockProps, getLanguageFromFilename } from "@githubnext/blocks";
-import { Button, Box } from "@primer/react";
+import { Button, Box, Heading, DataTable } from "@primer/react";
+import { useState } from "react";
 import "./index.css";
 
 export default function ExampleFileBlock(props: FileBlockProps) {
@@ -7,6 +8,8 @@ export default function ExampleFileBlock(props: FileBlockProps) {
   const language = Boolean(context.path)
     ? getLanguageFromFilename(context.path)
     : "N/A";
+  // force update?
+  const [seed, setSeed] = useState(0);
 
   return (
     <Box p={4}>
@@ -52,13 +55,13 @@ export default function ExampleFileBlock(props: FileBlockProps) {
                         'Content-Type': 'application/zip',
                       },
                       body: json.content, 
-                      mode: 'cors'}).then((response) =>{})
-                    .then((result) => {
-                      // finally we can update the display
-                      var ret = response;
-
-
-                    })
+                      mode: 'cors'}).then((resp) =>{
+                        resp.json().then((js) => {
+                          metadata.reqsetJson = js;
+                          setSeed(seed + 1);
+                        })
+                      })
+                    .then((result) => {})
                   }
                 );
 
@@ -70,7 +73,41 @@ export default function ExampleFileBlock(props: FileBlockProps) {
           >
             {metadata.number || 0} times
           </Button>
-          <pre className="mt-3 p-3">{content}</pre>
+          <pre className="mt-3 p-3" key={seed}>
+            <Heading>Summary: </Heading> 
+            {metadata.reqsetJson && 
+            <table>
+              <tr>
+                <td>File Path</td>
+                <td>
+                  {metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Filepath}
+                </td>
+              </tr>
+              <tr>
+                <td>Name</td>
+                <td>
+                  {metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Name}
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  Created By
+                </td>
+                <td>
+                  {metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.CreatedBy}
+                </td>
+              </tr>
+            </table>
+            }
+            {metadata.reqsetJson && 
+            <DataTable>
+              
+            </DataTable>
+            }
+          
+          </pre>
+          
+
         </Box>
       </Box>
     </Box>
