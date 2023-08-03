@@ -45,7 +45,7 @@ export default function ExampleFileBlock(props: FileBlockProps) {
 
                   response.json().then( (json) => { 
 
-                  const url = "http://10.0.2.15:8089/reqset/a";
+                  const url = "http://172.21.74.106:8808/reqset/a";
                   
                   // Now post to local golang server
                   fetch(url, { 
@@ -57,6 +57,15 @@ export default function ExampleFileBlock(props: FileBlockProps) {
                       mode: 'cors'}).then((resp) =>{
                         resp.json().then((js) => {
                           metadata.reqsetJson = js;
+                          // clean up the description by removing all the html tags
+                          for (var i = 0; i < metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items.length; ++i){
+                            const reqItem = metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[i];
+                            var desc = reqItem.Description;
+                            var removed = desc.replace(/(<([^>]+)>)/ig, '');
+                            var cleaned = removed.replace('p, li { white-space: pre-wrap; }', '');
+                            var cln = cleaned.replaceAll('\n', '');
+                            metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[i].Description = cln;
+                          }
                           setSeed(seed + 1);
                         })
                       })
@@ -107,8 +116,8 @@ export default function ExampleFileBlock(props: FileBlockProps) {
             {metadata.reqsetJson &&
             <table style={tableStyle}>
               <tr>
-                <th style={tdStyle}>Index</th>
                 <th style={tdStyle}>SID</th>
+                <th style={tdStyle}>Type</th>
                 <th style={tdStyle}>Summary</th>
                 <th style={tdStyle}>Description</th>
               </tr>
@@ -117,10 +126,10 @@ export default function ExampleFileBlock(props: FileBlockProps) {
                   return [
                     <tr>
                       <td style={tdStyle}>
-                        {i}
+                        {req.Sid}
                       </td>    
                       <td style={tdStyle}>
-                        {req.Sid}
+                        {req.TypeName}
                       </td>    
                       <td style={tdStyle}>
                         {req.Summary}
