@@ -1,5 +1,5 @@
 import { FileBlockProps, getLanguageFromFilename } from "@githubnext/blocks";
-import { Button, Box, Heading, Textarea } from "@primer/react";
+import { Button, Box, Heading, Textarea, TabNav, TextInput, ActionMenu, ActionList } from "@primer/react";
 import { useState } from "react";
 import "./index.css";
 
@@ -11,6 +11,7 @@ export default function ExampleFileBlock(props: FileBlockProps) {
   // force update?
   const [seed, setSeed] = useState(0);
   const [selSeed, setSelSeed] = useState(0);
+  const [sumValue, setSumValue] = useState('');
 
   const tableStyle = {
     "width": "100%", 
@@ -29,13 +30,31 @@ export default function ExampleFileBlock(props: FileBlockProps) {
     "background-color": "#f2f2f2"
   };
   const reqTableStyle = {
-    "width": "100%"
+    "width": "100%",
+    "vertical-align": "top"
   };
   const ovStyle = {
     "width": "50%",
     "background-color": "#f2f2f2",
-    "border": "5px solid white"
+    "border": "5px solid white",
+    "vertical-align": "top"
   };
+  const hrStyle = {
+    "border": "none",
+    "height": "0.5px",
+    "background": "#e2e2e2"
+  }
+
+  function onSummaryChange(e:Event){
+    var newSummary = e.target.value;
+    metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[selSeed].Summary = newSummary;
+    setSumValue(newSummary);
+  };
+
+  function update(e: Event){
+
+  }
+
   return (
     <Box p={4}>
       <Box
@@ -45,7 +64,8 @@ export default function ExampleFileBlock(props: FileBlockProps) {
         borderRadius={6}
         overflow="hidden"
       >
-        <Box p={4}>
+        <Box p='3'>
+        <Box sx={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'}}>
           <Button
             onClick={() =>{ 
                 // Use github api to retrieve content again
@@ -83,6 +103,7 @@ export default function ExampleFileBlock(props: FileBlockProps) {
                             metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[i].Description = cln;
                           }
                           setSeed(seed + 1);
+                          setSumValue(metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[0].Summary);
                         })
                       })
                     .then((result) => {})
@@ -96,11 +117,13 @@ export default function ExampleFileBlock(props: FileBlockProps) {
             }
           >
             Refresh
-          </Button>
+          </Button><Button onClick={update}>Save Changes</Button>
+          </Box>
+          <hr style={hrStyle}></hr>
           <p key={seed}>
-            <Heading >Requirement Set</Heading> 
+            <Heading sx={{fontSize: 3, mb:2}}>Requirement Set</Heading> 
             <p style={pStyle}>
-              <p>Summary</p>
+              <Heading sx={{fontSize: 2, mb:3}}>Summary</Heading>
             {metadata.reqsetJson && 
             <table style={tableStyle}>
               <tr>
@@ -126,12 +149,12 @@ export default function ExampleFileBlock(props: FileBlockProps) {
             </table>
             }
             </p>
-            <Heading>Requirements</Heading>
+            <Heading sx={{fontSize: 4, mb:2}}>Requirements</Heading>
             <table style={reqTableStyle}>
               <tr>
                 <td style={ovStyle}>
                   <p style={pStyle}>
-                    <p>Requirements</p>
+                    <Heading sx={{fontSize: 3, mb:2}}>Overview</Heading>
                     {metadata.reqsetJson &&
                     <table style={tableStyle}>
                       <tr>
@@ -144,6 +167,7 @@ export default function ExampleFileBlock(props: FileBlockProps) {
                         {metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items.map((req, i) =>{
                           return [
                             <tr onClick={()=>{
+                              setSumValue(req.Summary);
                               setSelSeed(i);
                             }}>
                               <td style={tdStyle}>
@@ -167,14 +191,55 @@ export default function ExampleFileBlock(props: FileBlockProps) {
                   </p>
                 </td>
                 <td style={ovStyle}>
+                  { metadata.reqsetJson &&
                   <p style={pStyle} key={selSeed}>
-                    <p>Property</p>
-                    <p>Summary</p>
-                    <Textarea>{metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[selSeed].Summary}</Textarea>
-                    <p>Description</p>
-                    <Textarea>{metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[selSeed].Description}</Textarea>
+                    <Heading sx={{fontSize: 3, mb:2}}>Properties</Heading>
+                    <table>
+                      <tr>
+                        <td>Type:</td>
+                        <td><ActionMenu>
+                      <ActionMenu.Button>Functional</ActionMenu.Button>
+                      <ActionMenu.Overlay>
+                        <ActionList>
+                          <ActionList.Item>Informational</ActionList.Item>
+                          <ActionList.Item>Container</ActionList.Item>
+                        </ActionList>
+                      </ActionMenu.Overlay>
+                    </ActionMenu>
+                    </td>
+                    </tr>
+                    <tr>
+                      <td>Custom ID:</td>
+                      <td>{metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[selSeed].Sid}</td>
+                    </tr>
+                    <tr>
+                    <td> Summary: </td>
+                    <td>
+                    <TextInput 
+                      onChange={onSummaryChange}
+                      width='700px'
+                      value={sumValue}
+                    ></TextInput>
+                    </td>
+                    </tr>
+                    </table>
+                    <TabNav aria-label="Main">
+                      <TabNav.Link href="#desc" selected>Description</TabNav.Link>
+                      <TabNav.Link href="#rati">Rationale</TabNav.Link>
+                    </TabNav>
+                    <Textarea
+                      cols={100}
+                      rows={8}
+                    >{metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[selSeed].Description}</Textarea>
                     <p>Links</p>
+                    <Textarea
+                      cols={100}
+                      rows={3}
+                      defaultValue="No links"
+                      disabled
+                      ></Textarea>
                   </p>
+                  }
                 </td>
               </tr>
           </table>
