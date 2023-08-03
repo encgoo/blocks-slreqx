@@ -126,7 +126,7 @@ export default function ExampleFileBlock(props: FileBlockProps) {
             </table>
             }
             </p>
-            <Heading>Requirements {seed}</Heading>
+            <Heading>Requirements</Heading>
             <table style={reqTableStyle}>
               <tr>
                 <td style={ovStyle}>
