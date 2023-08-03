@@ -1,5 +1,8 @@
 {
   "docs/LLR.slreqx": {
     "default": "encgoo__blocks-slreqx__slreqx-block"
+  },
+  "docs/HLR.slreqx": {
+    "default": "encgoo__blocks-slreqx__slreqx-block"
   }
 }
