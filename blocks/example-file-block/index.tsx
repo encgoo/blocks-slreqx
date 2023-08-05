@@ -1,7 +1,11 @@
 import { FileBlockProps, getLanguageFromFilename } from "@githubnext/blocks";
-import { Button, Box, Heading, Textarea, TabNav, TextInput, ActionMenu, ActionList } from "@primer/react";
+import { Button, Box, Heading, Textarea, TabNav, TextInput, ActionMenu, ActionList, Dialog, Text } from "@primer/react";
 import { useState } from "react";
 import "./index.css";
+
+var server_addr = '';
+var usr = ''
+var pwd = '';
 
 export default function ExampleFileBlock(props: FileBlockProps) {
   const { context, content, metadata, onUpdateMetadata } = props;
@@ -12,7 +16,11 @@ export default function ExampleFileBlock(props: FileBlockProps) {
   const [seed, setSeed] = useState(0);
   const [selSeed, setSelSeed] = useState(0);
   const [sumValue, setSumValue] = useState('');
+  const [openLogin, setOpenLogin] = useState(false);
 
+  var tmpServer = '';
+  var tmpUsr = '';
+  var tmpPwd = '';
   const tableStyle = {
     "width": "100%", 
     "border": "1px solid black",
@@ -50,6 +58,26 @@ export default function ExampleFileBlock(props: FileBlockProps) {
     metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[selSeed].Summary = newSummary;
     setSumValue(newSummary);
   };
+
+  function onChangeServer(e: Event){
+    tmpServer = e.target.value;
+  }
+
+  function onChangeUsr(e: Event){
+    tmpUsr = e.target.value;
+  }
+
+  function onChangePwd(e: Event){
+    tmpPwd = e.target.value;
+  }
+
+  function onLogin(e: Event){
+    // Set global variables?
+    server_addr = tmpServer;
+    usr = tmpUsr;
+    pwd = tmpPwd;
+    setOpenLogin(false);
+  }
 
   function update(e: Event){
 
@@ -118,6 +146,22 @@ export default function ExampleFileBlock(props: FileBlockProps) {
           >
             Refresh
           </Button><Button onClick={update}>Save Changes</Button>
+          <Dialog
+            isOpen={openLogin}
+            onDismiss={() => setOpenLogin(false)}
+            >
+              <Dialog.Header>
+                Login
+              </Dialog.Header>
+              <Box sx={{display: 'grid', gridTemplateColumns: '1fr 1fr'}}>
+                <Text>Server:</Text><TextInput onChange={onChangeServer} value={tmpServer}></TextInput>
+                <Text>Username:</Text><TextInput onChange={onChangeUsr} value={tmpUsr}></TextInput>
+                <Text>Password:</Text><TextInput onChange={onChangePwd} value={tmpPwd}></TextInput>
+              </Box>
+              <Box display="flex" mt={3} justifyContent="flex-end">
+                <Button onClick={onLogin}>Login</Button>
+              </Box>
+            </Dialog>
           </Box>
           <hr style={hrStyle}></hr>
           <p key={seed}>
