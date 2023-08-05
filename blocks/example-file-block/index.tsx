@@ -3,9 +3,6 @@ import { Button, Box, Heading, Textarea, TabNav, TextInput, ActionMenu, ActionLi
 import { useState } from "react";
 import "./index.css";
 
-var server_addr = '';
-var usr = ''
-var pwd = '';
 
 export default function ExampleFileBlock(props: FileBlockProps) {
   const { context, content, metadata, onUpdateMetadata } = props;
@@ -14,13 +11,14 @@ export default function ExampleFileBlock(props: FileBlockProps) {
     : "N/A";
   // force update?
   const [seed, setSeed] = useState(0);
+  // other user inputs
   const [selSeed, setSelSeed] = useState(0);
   const [sumValue, setSumValue] = useState('');
   const [openLogin, setOpenLogin] = useState(false);
+  const [tmpServer, setTmpServer] = useState("");
+  const [tmpUsr, setTmpUsr] = useState("");
+  const [tmpPwd, setTmpPwd] = useState("");
 
-  var tmpServer = '';
-  var tmpUsr = '';
-  var tmpPwd = '';
   const tableStyle = {
     "width": "100%", 
     "border": "1px solid black",
@@ -60,29 +58,80 @@ export default function ExampleFileBlock(props: FileBlockProps) {
   };
 
   function onChangeServer(e: Event){
-    tmpServer = e.target.value;
+    setTmpServer(e.target.value);
   }
 
   function onChangeUsr(e: Event){
-    tmpUsr = e.target.value;
+    setTmpUsr(e.target.value);
   }
 
   function onChangePwd(e: Event){
-    tmpPwd = e.target.value;
+    setTmpPwd(e.target.value);
   }
 
   function onLogin(e: Event){
     // Set global variables?
-    server_addr = tmpServer;
-    usr = tmpUsr;
-    pwd = tmpPwd;
+    localStorage.setItem('server_addr', tmpServer);
+    localStorage.setItem('server_usr', tmpUsr);
+    localStorage.setItem('server_pwd', tmpPwd);
     setOpenLogin(false);
+    refreshBlock();
   }
 
   function update(e: Event){
-
+    // debug only
+    localStorage.setItem('server_addr', "");
   }
+  function refreshBlock(){
+    // Use github api to retrieve content again
+    // https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
+    // Seems like blocks handle the token for us.
+    const url1 = 'https://api.github.com/repos/encgoo/blocks-slreqx/contents/' + context.path;
+    fetch(url1,{
+      method: 'GET',
+      headers: {
+          'Content-Type': 'application/zip',
+      },                 
+    }).then((response) => {
 
+      response.json().then( (json) => { 
+
+      var url = "http://172.21.74.106:8808/reqset/a";
+      if (localStorage.getItem('server_addr')){
+        url = localStorage.getItem('server_addr') + "/reqset/a";
+      }
+      
+      // Now post to local golang server
+      fetch(url, { 
+        method: 'POST', 
+          headers: {
+            'Content-Type': 'application/zip',
+          },
+          body: json.content, 
+          mode: 'cors'}).then((resp) =>{
+            resp.json().then((js) => {
+              metadata.reqsetJson = js;
+              // clean up the description by removing all the html tags
+              for (var i = 0; i < metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items.length; ++i){
+                const reqItem = metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[i];
+                var desc = reqItem.Description;
+                var removed = desc.replace(/(<([^>]+)>)/ig, '');
+                var cleaned = removed.replace('p, li { white-space: pre-wrap; }', '');
+                var cln = cleaned.replaceAll('\n', '');
+                metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[i].Description = cln;
+              }
+              setSeed(seed + 1);
+              setSumValue(metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[0].Summary);
+            })
+          })
+        .then((result) => {})
+      }
+    );
+
+    }).then((result) => {
+      var cont = result;
+    });
+  }
   return (
     <Box p={4}>
       <Box
@@ -95,54 +144,16 @@ export default function ExampleFileBlock(props: FileBlockProps) {
         <Box p='3'>
         <Box sx={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'}}>
           <Button
-            onClick={() =>{ 
-                // Use github api to retrieve content again
-                // https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
-                // Seems like blocks handle the token for us.
-                const url1 = 'https://api.github.com/repos/encgoo/blocks-slreqx/contents/' + context.path;
-                fetch(url1,{
-                  method: 'GET',
-                  headers: {
-                      'Content-Type': 'application/zip',
-                  },                 
-                }).then((response) => {
+            onClick={() =>{
+              const addr = localStorage.getItem('server_addr');
 
-                  response.json().then( (json) => { 
-
-                  const url = "http://172.21.74.106:8808/reqset/a";
-                  
-                  // Now post to local golang server
-                  fetch(url, { 
-                    method: 'POST', 
-                      headers: {
-                        'Content-Type': 'application/zip',
-                      },
-                      body: json.content, 
-                      mode: 'cors'}).then((resp) =>{
-                        resp.json().then((js) => {
-                          metadata.reqsetJson = js;
-                          // clean up the description by removing all the html tags
-                          for (var i = 0; i < metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items.length; ++i){
-                            const reqItem = metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[i];
-                            var desc = reqItem.Description;
-                            var removed = desc.replace(/(<([^>]+)>)/ig, '');
-                            var cleaned = removed.replace('p, li { white-space: pre-wrap; }', '');
-                            var cln = cleaned.replaceAll('\n', '');
-                            metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[i].Description = cln;
-                          }
-                          setSeed(seed + 1);
-                          setSumValue(metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[0].Summary);
-                        })
-                      })
-                    .then((result) => {})
-                  }
-                );
-
-                }).then((result) => {
-                  var cont = result;
-                });
-               }
-            }
+              if (!addr){
+                // show login dialog
+                setOpenLogin(true);
+              } else {
+                refreshBlock();
+              }
+            }}
           >
             Refresh
           </Button><Button onClick={update}>Save Changes</Button>
