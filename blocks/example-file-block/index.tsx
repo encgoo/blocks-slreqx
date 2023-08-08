@@ -98,7 +98,9 @@ export default function ExampleFileBlock(props: FileBlockProps) {
 
       var url = "http://172.21.74.106:8808/reqset/a";
       if (localStorage.getItem('server_addr')){
-        url = localStorage.getItem('server_addr') + "/reqset/a";
+
+        //url = localStorage.getItem('server_addr') + "/reqset/a";
+        url = localStorage.getItem('server_addr') + "/reqset/parseReqSet";
       }
       
       // Now post to local golang server
