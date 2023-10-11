@@ -12,12 +12,15 @@ export default function ExampleFileBlock(props: FileBlockProps) {
   // force update?
   const [seed, setSeed] = useState(0);
   // other user inputs
+  const [mlSel, setMlSel] = useState(false);
   const [selSeed, setSelSeed] = useState(0);
   const [sumValue, setSumValue] = useState('');
   const [openLogin, setOpenLogin] = useState(false);
   const [tmpServer, setTmpServer] = useState("");
   const [tmpUsr, setTmpUsr] = useState("");
   const [tmpPwd, setTmpPwd] = useState("");
+  const [slSel, setSlSel] = useState(false);
+
 
   const tableStyle = {
     "width": "100%", 
@@ -53,10 +56,49 @@ export default function ExampleFileBlock(props: FileBlockProps) {
 
   function onSummaryChange(e:Event){
     var newSummary = e.target.value;
-    metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[selSeed].Summary = newSummary;
+    
     setSumValue(newSummary);
   };
 
+  function onEndEdit(e: Event){
+    var newSummary = e.target.value;
+
+    const url = localStorage.getItem('server_addr') + "/reqset/updateSummary";
+   
+    var cnt = {
+      'origSummary': metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[selSeed].Summary,
+      'newSummary': newSummary,
+      'uuid': metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Filepath + ':' + metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[selSeed].Sid
+    };
+    var databody = {
+      "rhs": [cnt],
+      "nargout": 1,
+      "outputFormat": {
+        "mode": "small",
+        "nanType": "string"
+      }
+    };
+    fetch(url, { 
+      method: 'POST', 
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(databody), 
+        mode: 'cors'}).then((resp) =>{
+          // What do we get back from the MPS?
+          resp.text().then((tx) =>{
+            var tmp = JSON.parse(tx);
+            var tmp2 = JSON.parse(tmp.lhs[0]);
+            var ret = tmp2.rhs[0];
+            if (ret.updated){
+              // good to udpate local copy
+              metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[selSeed].Summary = newSummary;
+              setSeed (seed + 1);
+            }
+          })
+        }
+    );
+  }
   function onChangeServer(e: Event){
     setTmpServer(e.target.value);
   }
@@ -82,6 +124,53 @@ export default function ExampleFileBlock(props: FileBlockProps) {
     // debug only
     localStorage.setItem('server_addr', "");
   }
+
+
+  function refreshSelectedLinkableItems(){
+    // default url of our go-lang server
+    var url = "http://172.21.74.106:8808/reqset/getAllSelected";
+      if (localStorage.getItem('server_addr')){
+        url = localStorage.getItem('server_addr') + "/reqset/getAllSelected";
+      }
+
+      // This is special for MPS Restful request
+      var databody = {
+        "rhs": [],
+        "nargout": 1,
+        "outputFormat": {
+          "mode": "small",
+          "nanType": "string"
+        }
+      };
+      fetch(url, { 
+        method: 'POST', 
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(databody), 
+        mode: 'cors'}).then((resp) =>{
+          // parse resp from MPS
+          resp.text().then((tx) =>{
+            var tmp = JSON.parse(tx);
+            var tmp2 = JSON.parse(tmp.lhs[0]);
+            var selItems = tmp2.rhs;
+
+            setSlSel(true);
+            setMlSel(true);
+
+            for (var i=0; i < selItems.length; ++i){
+              const filename = selItems[i].filename;
+              const extension = filename.substring(filename.lastIndexOf('.') + 1);
+              if (extension === 'slx'){
+                // simulink
+                setSlSel(false);
+              } else if (extension == 'm'){
+                setMlSel(false);
+              }
+            }
+          });
+        });
+  }
   function refreshBlock(){
     // Use github api to retrieve content again
     // https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
@@ -96,21 +185,56 @@ export default function ExampleFileBlock(props: FileBlockProps) {
 
       response.json().then( (json) => { 
 
+        // update selected
+        refreshSelectedLinkableItems();
+
+
       var url = "http://172.21.74.106:8808/reqset/a";
       if (localStorage.getItem('server_addr')){
 
         //url = localStorage.getItem('server_addr') + "/reqset/a";
         url = localStorage.getItem('server_addr') + "/reqset/parseReqSet";
+        //url = localStorage.getItem('server_addr') + "/reqset/readReqSet";
       }
       
+      const cnt = json.content;
       // Now post to local golang server
+      var databody = {
+        "rhs": [cnt],
+        "nargout": 1,
+        "outputFormat": {
+          "mode": "small",
+          "nanType": "string"
+        }
+      };
       fetch(url, { 
         method: 'POST', 
           headers: {
-            'Content-Type': 'application/zip',
+            'Content-Type': 'application/json',
           },
-          body: json.content, 
+          body: JSON.stringify(databody), 
           mode: 'cors'}).then((resp) =>{
+            // What do we get back from the MPS?
+            resp.text().then((tx) =>{
+              var tmp = JSON.parse(tx);
+              var tmp2 = JSON.parse(tmp.lhs[0]);
+              metadata.reqsetJson = tmp2.rhs[0];
+              metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items = tmp2.rhs[0].Mf0model.Slreq_datamodel_RequirementSet.Items.mwdata;
+              // clean up the description by removing all the html tags
+              for (var i = 0; i < metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items.length; ++i){
+                const reqItem = metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[i];
+                var desc = reqItem.Description;
+                var removed = desc.replace(/(<([^>]+)>)/ig, '');
+                var cleaned = removed.replace('p, li { white-space: pre-wrap; }', '');
+                var cln = cleaned.replaceAll('\n', '');
+                metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[i].Description = cln;
+              }
+              setSeed(seed + 1);
+              setSumValue(metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[0].Summary);
+            })
+
+
+/* This go-lang server section, if MPS above is not used
             resp.json().then((js) => {
               metadata.reqsetJson = js;
               // clean up the description by removing all the html tags
@@ -125,6 +249,7 @@ export default function ExampleFileBlock(props: FileBlockProps) {
               setSeed(seed + 1);
               setSumValue(metadata.reqsetJson.Mf0model.Slreq_datamodel_RequirementSet.Items[0].Summary);
             })
+            */
           })
         .then((result) => {})
       }
@@ -158,7 +283,19 @@ export default function ExampleFileBlock(props: FileBlockProps) {
             }}
           >
             Refresh
-          </Button><Button onClick={update}>Save Changes</Button>
+          </Button>
+          <Button onClick={update}>Save Changes</Button>
+          <ActionMenu>
+            <ActionMenu.Button>Create a Link to</ActionMenu.Button>
+            <ActionMenu.Overlay>
+              <ActionList id='selectedItems'>
+                <ActionList.Item disabled={slSel}>Selected Simulink item</ActionList.Item>
+                <ActionList.Item disabled={mlSel}>Selected matlab code section</ActionList.Item>
+                <ActionList.Item disabled='true'>Selected Simulink Test Case</ActionList.Item>
+                <ActionList.Item disabled='true'>Selected matlab test case</ActionList.Item>
+              </ActionList>
+            </ActionMenu.Overlay>
+          </ActionMenu>
           <Dialog
             isOpen={openLogin}
             onDismiss={() => setOpenLogin(false)}
@@ -254,7 +391,8 @@ export default function ExampleFileBlock(props: FileBlockProps) {
                     <table>
                       <tr>
                         <td>Type:</td>
-                        <td><ActionMenu>
+                        <td>
+                    <ActionMenu>
                       <ActionMenu.Button>Functional</ActionMenu.Button>
                       <ActionMenu.Overlay>
                         <ActionList>
@@ -274,6 +412,7 @@ export default function ExampleFileBlock(props: FileBlockProps) {
                     <td>
                     <TextInput 
                       onChange={onSummaryChange}
+                      onBlur={onEndEdit}
                       width='700px'
                       value={sumValue}
                     ></TextInput>
